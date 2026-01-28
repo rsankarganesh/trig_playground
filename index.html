@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angles & Trig Lab 📐</title>
+    <!-- Google Fonts: Nunito for a friendly, round look -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --text-main: #f8fafc;
+            --accent-blue: #3b82f6;   /* Opposite */
+            --accent-green: #2ecc71;  /* Adjacent */
+            --accent-red: #ef4444;    /* Hypotenuse */
+            --accent-yellow: #f59e0b; /* Angles */
+            --accent-purple: #8b5cf6; /* Real World */
+            --active-tab: #334155;
+            --explain-bg: #334155;
+            --explain-text: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.8);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .home-btn {
+            background: rgba(255,255,255,0.1);
+            color: var(--accent-blue);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 800;
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .home-btn:hover { background: var(--accent-blue); color: white; transform: translateY(-2px); }
+
+        .title { font-size: 1.5rem; font-weight: 800; color: white; }
+        .subtitle { font-size: 0.9rem; color: #94a3b8; font-weight: 400; }
+
+        /* --- MAIN LAYOUT --- */
+        .container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 70px);
+            flex-direction: row;
+        }
+
+        /* --- CANVAS AREA --- */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            background-image: 
+                radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 40px 40px, 10px 10px;
+            cursor: crosshair;
+            overflow: hidden;
+        }
+
+        svg { width: 100%; height: 100%; }
+
+        /* SVG Elements */
+        .line-segment { stroke-width: 4; stroke-linecap: round; transition: stroke 0.2s; }
+        .line-hyp { stroke: var(--accent-red); }
+        .line-adj { stroke: var(--accent-green); }
+        .line-opp { stroke: var(--accent-blue); }
+        .line-default { stroke: #64748b; }
+        
+        .point { cursor: grab; transition: r 0.2s; fill: white; stroke-width: 3; }
+        .point:hover { r: 10; }
+        .point.active { cursor: grabbing; r: 12; fill: var(--accent-yellow); }
+
+        .angle-arc { fill: rgba(245, 158, 11, 0.1); stroke: var(--accent-yellow); stroke-width: 2; opacity: 0.5; }
+        .angle-arc.active-angle { fill: rgba(245, 158, 11, 0.4); stroke-width: 4; opacity: 1; }
+
+        .label-text { font-family: 'Nunito', sans-serif; font-weight: bold; font-size: 14px; fill: white; text-shadow: 0 2px 4px black; pointer-events: none; }
+        .measurement-text { font-size: 12px; fill: #cbd5e1; pointer-events: none; }
+        .role-text { font-size: 11px; fill: white; font-weight:800; pointer-events: none; text-shadow: 0 1px 3px black; opacity: 0; transition: opacity 0.3s; }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 380px;
+            background: var(--panel-bg);
+            border-left: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+        }
+
+        .panel-section {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        h2 { font-size: 1.1rem; margin-bottom: 15px; color: var(--accent-yellow); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Controls */
+        .tab-container {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 4px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .tab-btn.active { background: var(--active-tab); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent-yellow);
+            cursor: pointer;
+        }
+
+        input[type="number"] {
+            width: 60px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        
+        .btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: rgba(255,255,255,0.15); }
+        .btn-primary { background: var(--accent-blue); border: none; }
+        .btn-primary:hover { background: #2563eb; }
+
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+
+        /* Data Display */
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 4px solid transparent;
+        }
+        
+        .border-red { border-color: var(--accent-red); }
+        .border-blue { border-color: var(--accent-blue); }
+        .border-green { border-color: var(--accent-green); }
+        .border-yellow { border-color: var(--accent-yellow); }
+
+        .trig-card {
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .trig-header { font-size: 0.85rem; color: #cbd5e1; margin-bottom: 5px; font-weight: bold; }
+        .trig-value { font-size: 1.3rem; font-weight: bold; color: white; }
+        .trig-formula { font-size: 0.75rem; color: #94a3b8; position: absolute; right: 10px; top: 12px; }
+
+        /* EXPLAIN MODE STYLES */
+        body.explain-mode .role-text { opacity: 1; }
+        
+        .explain-box {
+            display: none;
+            background: var(--explain-bg);
+            color: #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent-yellow);
+            animation: fadeIn 0.3s;
+        }
+        
+        .explain-icon { margin-right: 5px; }
+
+        body.explain-mode .explain-box { display: block; }
+        
+        /* Highlight specific Explain elements */
+        body.explain-mode .trig-card { border-width: 1px 1px 1px 4px; background: rgba(255,255,255,0.08); }
+        body.explain-mode .trig-formula { font-size: 0.9rem; color: var(--accent-yellow); position: relative; right: auto; top: auto; margin: 5px 0; }
+
+        /* Challenge Mode Overlay */
+        .challenge-banner {
+            background: var(--accent-blue);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            display: none;
+        }
+        .challenge-banner.active { display: block; animation: slideDown 0.3s; }
+        .success-msg { color: var(--accent-green); font-weight: bold; margin-top: 5px; opacity: 0; transition: opacity 0.3s; }
+
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; height: 50%; order: 2; }
+            .canvas-area { height: 50%; order: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div style="display:flex; align-items:center; gap:15px;">
+            <a href="https://rsankarganesh.github.io/my-dev-tools/" class="home-btn">🏠 Home</a>
+            <div>
+                <div class="title">Angles & Trig Lab 📐</div>
+                <div class="subtitle">Interactive Trigonometry Explorer</div>
+            </div>
+        </div>
+        <div id="mode-display" style="font-weight:bold; color:var(--accent-yellow)">Explore Mode</div>
+    </nav>
+
+    <div id="challenge-banner" class="challenge-banner">
+        <div>🎯 Goal: <span id="challenge-target">Make a 90° Angle</span></div>
+        <div id="challenge-feedback" class="success-msg">✅ Excellent!</div>
+    </div>
+
+    <div class="container">
+        <!-- LEFT: Canvas -->
+        <div class="canvas-area" id="canvas-container">
+            <svg id="geo-svg">
+                <!-- Grid Background -->
+                
+                <!-- Angle Arcs -->
+                <path id="arc-A" class="angle-arc" d="" />
+                <path id="arc-B" class="angle-arc" d="" />
+                <path id="arc-C" class="angle-arc" d="" />
+
+                <!-- Triangle Lines -->
+                <line id="line-AB" class="line-segment" x1="0" y1="0" x2="0" y2="0" /> 
+                <line id="line-BC" class="line-segment" x1="0" y1="0" x2="0" y2="0" /> 
+                <line id="line-CA" class="line-segment" x1="0" y1="0" x2="0" y2="0" /> 
+
+                <!-- Labels -->
+                <text id="label-A" class="label-text" x="0" y="0">A</text>
+                <text id="label-B" class="label-text" x="0" y="0">B</text>
+                <text id="label-C" class="label-text" x="0" y="0">C</text>
+
+                <!-- Measurements (Lengths) -->
+                <text id="meas-AB" class="measurement-text" x="0" y="0">10</text>
+                <text id="meas-BC" class="measurement-text" x="0" y="0">10</text>
+                <text id="meas-CA" class="measurement-text" x="0" y="0">10</text>
+
+                <!-- Roles (Explain Mode Only) -->
+                <text id="role-AB" class="role-text" x="0" y="0">Hypotenuse</text>
+                <text id="role-BC" class="role-text" x="0" y="0">Opposite</text>
+                <text id="role-CA" class="role-text" x="0" y="0">Adjacent</text>
+
+                <!-- Points (Drawn last to be on top) -->
+                <circle id="point-A" class="point" cx="100" cy="300" r="8" stroke="var(--accent-yellow)" />
+                <circle id="point-B" class="point" cx="400" cy="100" r="8" stroke="var(--accent-yellow)" />
+                <circle id="point-C" class="point" cx="400" cy="300" r="8" stroke="var(--accent-yellow)" />
+                
+                <!-- Square for Right Angle -->
+                <path id="right-angle-mark" fill="none" stroke="white" stroke-width="2" d="" />
+            </svg>
+        </div>
+
+        <!-- RIGHT: Sidebar -->
+        <div class="sidebar">
+            
+            <!-- Angle Controls -->
+            <div class="panel-section">
+                <h2>Controls</h2>
+                
+                <div class="toggle-row" style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <span style="font-weight:bold; color: var(--accent-yellow);">💡 Explain Mode</span>
+                    <input type="checkbox" id="toggle-explain" onchange="app.toggleExplainMode()">
+                </div>
+                <div class="explain-box">
+                    <span class="explain-icon">ℹ️</span> Shows helpful tips to explain what each control does.
+                </div>
+
+                <div style="height:10px;"></div>
+
+                <div class="explain-box">
+                    <span class="explain-icon">❓</span> <strong>Active Angle:</strong> Choose which corner you want to change.
+                </div>
+                <div class="tab-container">
+                    <button class="tab-btn active" id="tab-A" onclick="app.setActive('A')">Angle A</button>
+                    <button class="tab-btn" id="tab-B" onclick="app.setActive('B')">Angle B</button>
+                    <button class="tab-btn" id="tab-C" onclick="app.setActive('C')">Angle C</button>
+                </div>
+
+                <div class="explain-box">
+                    <span class="explain-icon">📏</span> <strong>Slider:</strong> Move this to change the angle size. Other angles change to keep the triangle valid.
+                </div>
+                <div class="slider-container">
+                    <span style="font-weight:bold; width: 40px;">∠<span id="slider-label">A</span></span>
+                    <input type="range" id="angle-slider" min="10" max="170" value="90" oninput="app.sliderChange(this.value)">
+                    <input type="number" id="angle-input" min="10" max="170" value="90" onchange="app.sliderChange(this.value)">
+                </div>
+
+                <div class="explain-box">
+                    <span class="explain-icon">📐</span> <strong>Snap 90°:</strong> Creates a right angle. Perfect for learning Trigonometry basics.
+                </div>
+                <div class="btn-grid">
+                    <button class="btn btn-primary" onclick="app.snapToRight()">📐 Snap 90°</button>
+                    <button class="btn" onclick="app.reset()">🔄 Reset</button>
+                </div>
+            </div>
+
+            <!-- What is Trigonometry? (Explain Mode Only) -->
+            <div class="panel-section explain-box" style="border-left-color: var(--accent-blue);">
+                <h2>📐 What is Trigonometry?</h2>
+                <p style="font-size: 0.9rem; margin-bottom: 10px; line-height: 1.4;">
+                    Trigonometry is a branch of maths that uses triangles to find <strong>angles</strong> and <strong>distances</strong>. It helps us calculate things we can't measure with a ruler!
+                </p>
+                
+                <div style="margin-top:10px;">
+                    <strong style="color: var(--accent-yellow); font-size: 0.9rem;">🤔 Why do we need it?</strong>
+                    <ul style="list-style: none; padding: 0; margin-top: 5px; font-size: 0.85rem; line-height: 1.6;">
+                        <li>🏢 Measuring the height of tall buildings</li>
+                        <li>✈️ Finding where a plane is in the sky</li>
+                        <li>🗺️ GPS directions and maps</li>
+                        <li>🎮 Moving characters in video games</li>
+                        <li>🪜 Building safe stairs and ramps</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Measurements -->
+            <div class="panel-section">
+                <h2>Geometry</h2>
+                
+                <!-- Angle Sum Proof (Explain Mode) -->
+                <div class="explain-box" style="border-left-color: var(--accent-green);">
+                    <div style="margin-bottom:5px;"><strong>Angle Sum Proof:</strong></div>
+                    <div style="font-family: monospace; font-size: 0.9rem;">
+                        ∠A + ∠B + ∠C = 180°<br>
+                        <span id="sum-proof-text">90 + 60 + 30 = 180</span>
+                    </div>
+                    <div style="margin-top:5px; font-size:0.75rem;">All triangles always add up to 180 degrees.</div>
+                </div>
+
+                <div class="data-row border-yellow">
+                    <span>Active Angle (θ)</span>
+                    <span id="val-angle-main">0°</span>
+                </div>
+                <div class="data-row" style="font-size: 0.9rem; color: #94a3b8;">
+                    <span>Other Angles</span>
+                    <span id="val-angles-other">B: 0°, C: 0°</span>
+                </div>
+                <div class="data-row border-blue">
+                    <span id="label-opp">Opposite Side</span>
+                    <span id="val-opp">0</span>
+                </div>
+                <div class="data-row border-green">
+                    <span id="label-adj">Adjacent Side</span>
+                    <span id="val-adj">0</span>
+                </div>
+                <div class="data-row border-red">
+                    <span id="label-hyp">Hypotenuse (Longest)</span>
+                    <span id="val-hyp">0</span>
+                </div>
+            </div>
+
+            <!-- Trigonometry -->
+            <div class="panel-section">
+                <h2>Trigonometry (θ = <span id="trig-angle-label">A</span>)</h2>
+                
+                <div class="trig-card" style="border-left: 4px solid var(--accent-blue)">
+                    <div class="trig-header">SIN(θ)</div>
+                    <div class="explain-box">
+                        Sine compares the <strong>Opposite</strong> side to the <strong>Longest</strong> side (Hypotenuse).
+                    </div>
+                    <div class="trig-formula">Opposite / Hypotenuse</div>
+                    <div class="trig-value" id="val-sin">0.00</div>
+                </div>
+
+                <div class="trig-card" style="border-left: 4px solid var(--accent-green)">
+                    <div class="trig-header">COS(θ)</div>
+                    <div class="explain-box">
+                        Cosine compares the <strong>Adjacent</strong> side to the <strong>Longest</strong> side.
+                    </div>
+                    <div class="trig-formula">Adjacent / Hypotenuse</div>
+                    <div class="trig-value" id="val-cos">0.00</div>
+                </div>
+
+                <div class="trig-card" style="border-left: 4px solid var(--accent-yellow)">
+                    <div class="trig-header">TAN(θ)</div>
+                    <div class="explain-box">
+                        Tangent compares the <strong>Opposite</strong> side to the <strong>Adjacent</strong> side.
+                    </div>
+                    <div class="trig-formula">Opposite / Adjacent</div>
+                    <div class="trig-value" id="val-tan">0.00</div>
+                </div>
+            </div>
+
+            <!-- Real World Uses (Explain Mode Only) -->
+            <div class="panel-section explain-box" style="border-left-color: var(--accent-purple); margin-top: 20px;">
+                <h2>🌍 Real-World Uses</h2>
+                <div id="real-world-content" style="font-size: 0.9rem; line-height: 1.4;">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+class GeometryApp {
+    constructor() {
+        this.svg = document.getElementById('geo-svg');
+        this.container = document.getElementById('canvas-container');
+        
+        // Initial Points state
+        this.points = {
+            A: { x: 100, y: 400 }, 
+            B: { x: 400, y: 150 }, 
+            C: { x: 400, y: 400 }  
+        };
+
+        this.dragging = null;
+        this.activeVert = 'A'; // 'A', 'B', or 'C'
+        
+        // Challenge Mode State
+        this.challengeMode = false;
+        this.targetAngle = 0;
+        this.challenges = [90, 45, 30, 60, 135];
+
+        this.bindEvents();
+        this.updateUI();
+    }
+
+    bindEvents() {
+        // SVG Mouse/Touch Events
+        this.svg.addEventListener('mousedown', (e) => this.startDrag(e));
+        this.svg.addEventListener('mousemove', (e) => this.drag(e));
+        window.addEventListener('mouseup', () => this.endDrag());
+
+        this.svg.addEventListener('touchstart', (e) => this.startDrag(e), {passive: false});
+        this.svg.addEventListener('touchmove', (e) => this.drag(e), {passive: false});
+        window.addEventListener('touchend', () => this.endDrag());
+    }
+
+    toggleExplainMode() {
+        const isOn = document.getElementById('toggle-explain').checked;
+        if(isOn) {
+            document.body.classList.add('explain-mode');
+        } else {
+            document.body.classList.remove('explain-mode');
+        }
+        // Force redraw to update dynamic labels immediately
+        this.updateUI();
+    }
+
+    getPointerPos(e) {
+        const rect = this.svg.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    startDrag(e) {
+        const pos = this.getPointerPos(e);
+        ['A', 'B', 'C'].forEach(key => {
+            const p = this.points[key];
+            const dist = Math.hypot(p.x - pos.x, p.y - pos.y);
+            if (dist < 20) {
+                this.dragging = key;
+                // Auto-select the dragged point as active
+                this.setActive(key); 
+                document.getElementById(`point-${key}`).classList.add('active');
+            }
+        });
+    }
+
+    drag(e) {
+        if (!this.dragging) return;
+        e.preventDefault();
+        
+        const pos = this.getPointerPos(e);
+        pos.x = Math.max(20, Math.min(this.container.clientWidth - 20, pos.x));
+        pos.y = Math.max(20, Math.min(this.container.clientHeight - 20, pos.y));
+
+        this.points[this.dragging] = pos;
+        this.updateUI();
+    }
+
+    endDrag() {
+        if (this.dragging) {
+            document.getElementById(`point-${this.dragging}`).classList.remove('active');
+            this.dragging = null;
+            if(this.challengeMode) this.checkChallenge();
+        }
+    }
+
+    // --- GEOMETRY CORE ---
+
+    getDistance(p1, p2) {
+        return Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    }
+
+    getAngle(center, p1, p2) {
+        const ang1 = Math.atan2(p1.y - center.y, p1.x - center.x);
+        const ang2 = Math.atan2(p2.y - center.y, p2.x - center.x);
+        let deg = (ang2 - ang1) * 180 / Math.PI;
+        deg = Math.abs(deg);
+        if (deg > 180) deg = 360 - deg;
+        return deg;
+    }
+
+    // --- STATE MANAGEMENT ---
+
+    setActive(vert) {
+        this.activeVert = vert;
+        
+        // Update Tabs
+        ['A', 'B', 'C'].forEach(v => {
+            const btn = document.getElementById(`tab-${v}`);
+            if(v === vert) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        // Update Slider Labels
+        document.getElementById('slider-label').textContent = vert;
+        document.getElementById('trig-angle-label').textContent = vert;
+
+        this.updateUI();
+    }
+
+    sliderChange(val) {
+        val = parseFloat(val);
+        const center = this.points[this.activeVert];
+        let pFixed, pMoving;
+
+        // Define relationship map
+        if (this.activeVert === 'A') { pFixed = 'C'; pMoving = 'B'; }
+        else if (this.activeVert === 'B') { pFixed = 'A'; pMoving = 'C'; }
+        else { pFixed = 'B'; pMoving = 'A'; } // C
+
+        const fixedPt = this.points[pFixed];
+        const movingPt = this.points[pMoving];
+
+        const baseAngle = Math.atan2(fixedPt.y - center.y, fixedPt.x - center.x);
+        const len = this.getDistance(center, movingPt);
+
+        // Determine direction
+        const currAngleMov = Math.atan2(movingPt.y - center.y, movingPt.x - center.x);
+        let angleDiff = currAngleMov - baseAngle;
+        while (angleDiff <= -Math.PI) angleDiff += 2*Math.PI;
+        while (angleDiff > Math.PI) angleDiff -= 2*Math.PI;
+        const direction = angleDiff >= 0 ? 1 : -1;
+
+        // Calculate new position
+        const targetRad = val * Math.PI / 180;
+        const newAngle = baseAngle + (targetRad * direction);
+
+        this.points[pMoving] = {
+            x: center.x + len * Math.cos(newAngle),
+            y: center.y + len * Math.sin(newAngle)
+        };
+
+        this.updateUI();
+    }
+
+    // --- UI RENDER ---
+
+    updateUI() {
+        const { A, B, C } = this.points;
+
+        // 1. Render Points & Lines
+        this.setAttr('point-A', { cx: A.x, cy: A.y });
+        this.setAttr('point-B', { cx: B.x, cy: B.y });
+        this.setAttr('point-C', { cx: C.x, cy: C.y });
+
+        this.setAttr('line-AB', { x1: A.x, y1: A.y, x2: B.x, y2: B.y });
+        this.setAttr('line-BC', { x1: B.x, y1: B.y, x2: C.x, y2: C.y });
+        this.setAttr('line-CA', { x1: C.x, y1: C.y, x2: A.x, y2: A.y });
+
+        this.setAttr('label-A', { x: A.x - 20, y: A.y + 20 });
+        this.setAttr('label-B', { x: B.x, y: B.y - 15 });
+        this.setAttr('label-C', { x: C.x + 15, y: C.y + 15 });
+
+        // 2. Calculate Distances
+        const lenc = this.getDistance(A, B); // Side c (Opposite C)
+        const lena = this.getDistance(B, C); // Side a (Opposite A)
+        const lenb = this.getDistance(C, A); // Side b (Opposite B)
+
+        // 3. Calculate Angles
+        const angA = this.getAngle(A, C, B);
+        const angB = this.getAngle(B, A, C);
+        const angC = this.getAngle(C, B, A);
+
+        // Update Angle Sum Proof
+        document.getElementById('sum-proof-text').textContent = 
+            `${Math.round(angA)}° + ${Math.round(angB)}° + ${Math.round(angC)}° = 180°`;
+
+        // 4. Determine Roles based on Active Vertex
+        let oppVal, adjVal, hypVal;
+        let oppName, adjName, hypName;
+        let oppId, adjId, hypId;
+
+        const maxLen = Math.max(lena, lenb, lenc);
+        
+        ['line-AB', 'line-BC', 'line-CA'].forEach(id => {
+            const el = document.getElementById(id);
+            el.setAttribute('class', 'line-segment line-default');
+        });
+
+        if (this.activeVert === 'A') {
+            oppVal = lena; oppName = "a (BC)"; oppId = 'line-BC';
+            if (maxLen === lenc) { hypVal = lenc; hypName = "c (AB)"; hypId = 'line-AB'; adjVal = lenb; adjName = "b (AC)"; adjId = 'line-CA'; }
+            else { hypVal = lenb; hypName = "b (AC)"; hypId = 'line-CA'; adjVal = lenc; adjName = "c (AB)"; adjId = 'line-AB'; }
+        } 
+        else if (this.activeVert === 'B') {
+            oppVal = lenb; oppName = "b (AC)"; oppId = 'line-CA';
+            if (maxLen === lena) { hypVal = lena; hypName = "a (BC)"; hypId = 'line-BC'; adjVal = lenc; adjName = "c (AB)"; adjId = 'line-AB'; }
+            else { hypVal = lenc; hypName = "c (AB)"; hypId = 'line-AB'; adjVal = lena; adjName = "a (BC)"; adjId = 'line-BC'; }
+        }
+        else { // C
+            oppVal = lenc; oppName = "c (AB)"; oppId = 'line-AB';
+            if (maxLen === lena) { hypVal = lena; hypName = "a (BC)"; hypId = 'line-BC'; adjVal = lenb; adjName = "b (AC)"; adjId = 'line-CA'; }
+            else { hypVal = lenb; hypName = "b (AC)"; hypId = 'line-CA'; adjVal = lena; adjName = "a (BC)"; adjId = 'line-BC'; }
+        }
+
+        // Color Lines
+        document.getElementById(oppId).setAttribute('class', 'line-segment line-opp');
+        document.getElementById(adjId).setAttribute('class', 'line-segment line-adj');
+        document.getElementById(hypId).setAttribute('class', 'line-segment line-hyp');
+
+        // Update Labels on Canvas for Explain Mode
+        // Map line IDs to role Text IDs
+        const map = {'line-AB': 'role-AB', 'line-BC': 'role-BC', 'line-CA': 'role-CA'};
+        document.getElementById(map[oppId]).textContent = "Opposite";
+        document.getElementById(map[adjId]).textContent = "Adjacent";
+        document.getElementById(map[hypId]).textContent = "Hypotenuse";
+
+        // 5. Update Measurements Panel
+        const activeAngleVal = this.activeVert === 'A' ? angA : (this.activeVert === 'B' ? angB : angC);
+        
+        document.getElementById('val-angle-main').textContent = Math.round(activeAngleVal) + "°";
+        document.getElementById('val-angles-other').textContent = this.getOtherAnglesString();
+        
+        document.getElementById('val-opp').textContent = Math.round(oppVal);
+        document.getElementById('label-opp').textContent = `Opposite (${oppName})`;
+        
+        document.getElementById('val-adj').textContent = Math.round(adjVal);
+        document.getElementById('label-adj').textContent = `Adjacent (${adjName})`;
+        
+        document.getElementById('val-hyp').textContent = Math.round(hypVal);
+        document.getElementById('label-hyp').textContent = `Hypotenuse (${hypName})`;
+
+        // 6. Update Length Labels positions
+        this.setAttr('meas-AB', { x: (A.x+B.x)/2, y: (A.y+B.y)/2 });
+        this.setAttr('meas-BC', { x: (B.x+C.x)/2, y: (B.y+C.y)/2 });
+        this.setAttr('meas-CA', { x: (C.x+A.x)/2, y: (C.y+A.y)/2 });
+        document.getElementById('meas-AB').textContent = Math.round(lenc);
+        document.getElementById('meas-BC').textContent = Math.round(lena);
+        document.getElementById('meas-CA').textContent = Math.round(lenb);
+
+        // Update Role Labels positions (offset slightly)
+        this.setAttr('role-AB', { x: (A.x+B.x)/2 + 10, y: (A.y+B.y)/2 - 15 });
+        this.setAttr('role-BC', { x: (B.x+C.x)/2 + 10, y: (B.y+C.y)/2 - 15 });
+        this.setAttr('role-CA', { x: (C.x+A.x)/2 - 40, y: (C.y+A.y)/2 + 15 });
+
+        // 7. Update Angle Arcs
+        this.drawArc('arc-A', A, 30, angA, C, B, 'A');
+        this.drawArc('arc-B', B, 30, angB, A, C, 'B');
+        this.drawArc('arc-C', C, 30, angC, B, A, 'C');
+
+        // 8. Update Slider Input (prevent loop)
+        if (document.activeElement.id !== 'angle-slider' && document.activeElement.id !== 'angle-input') {
+            document.getElementById('angle-slider').value = Math.round(activeAngleVal);
+            document.getElementById('angle-input').value = Math.round(activeAngleVal);
+        }
+
+        // 9. Update Trig
+        const rad = activeAngleVal * Math.PI / 180;
+        document.getElementById('val-sin').textContent = Math.sin(rad).toFixed(3);
+        document.getElementById('val-cos').textContent = Math.cos(rad).toFixed(3);
+        document.getElementById('val-tan').textContent = Math.tan(rad).toFixed(3);
+
+        // 10. Update Real World Scenario (New)
+        this.updateRealWorld(activeAngleVal);
+
+        // 11. Right Angle Mark Check
+        const rightA = Math.abs(angA - 90) < 5;
+        const rightB = Math.abs(angB - 90) < 5;
+        const rightC = Math.abs(angC - 90) < 5;
+        
+        if (rightA) this.drawRightAngleMark(A, C, B);
+        else if (rightB) this.drawRightAngleMark(B, A, C);
+        else if (rightC) this.drawRightAngleMark(C, A, B);
+        else document.getElementById('right-angle-mark').setAttribute('d', '');
+        
+        this.currentAngleA = angA; // For challenge mode compatibility
+    }
+
+    updateRealWorld(angle) {
+        let icon = "🎮";
+        let title = "Video Games";
+        let text = "Games use angles to move characters and aim weapons.";
+
+        // Basic context logic based on angle size
+        if (angle > 70) {
+            icon = "🏢";
+            title = "Building Height";
+            text = "Engineers use steep angles to measure skyscrapers from the ground.";
+        } else if (angle < 20) {
+            icon = "✈️";
+            title = "Aviation";
+            text = "Pilots use shallow angles for safe takeoff and landing paths.";
+        } else if (Math.abs(angle - 90) < 5) {
+            icon = "🏗️";
+            title = "Construction";
+            text = "Builders use exact 90° angles for strong walls and corners.";
+        } else if (angle >= 20 && angle <= 70) {
+            // Randomly flip between GPS and Surveying for mid-range
+            if (Math.random() > 0.5) {
+                icon = "🛰️";
+                title = "GPS";
+                text = "Satellites use triangles (triangulation) to find your exact location.";
+            } else {
+                icon = "🧍";
+                title = "Surveying";
+                text = "Surveyors measure land height using angles from the ground.";
+            }
+        }
+
+        const html = `
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+                <div style="font-size:1.5rem;">${icon}</div>
+                <div>
+                    <strong style="color:var(--accent-yellow)">${title}</strong><br>
+                    ${text}
+                </div>
+            </div>
+        `;
+        document.getElementById('real-world-content').innerHTML = html;
+    }
+
+    getOtherAnglesString() {
+        const { A, B, C } = this.points;
+        const angA = Math.round(this.getAngle(A, C, B));
+        const angB = Math.round(this.getAngle(B, A, C));
+        const angC = Math.round(this.getAngle(C, B, A));
+        
+        if (this.activeVert === 'A') return `∠B: ${angB}°, ∠C: ${angC}°`;
+        if (this.activeVert === 'B') return `∠A: ${angA}°, ∠C: ${angC}°`;
+        return `∠A: ${angA}°, ∠B: ${angB}°`;
+    }
+
+    setAttr(id, attrs) {
+        const el = document.getElementById(id);
+        if(el) {
+            for (let key in attrs) {
+                el.setAttribute(key, attrs[key]);
+            }
+        }
+    }
+
+    drawArc(id, center, radius, angle, pStartRef, pEndRef, label) {
+        const startAngle = Math.atan2(pStartRef.y - center.y, pStartRef.x - center.x);
+        const endAngle = Math.atan2(pEndRef.y - center.y, pEndRef.x - center.x);
+        
+        const x1 = center.x + radius * Math.cos(startAngle);
+        const y1 = center.y + radius * Math.sin(startAngle);
+        const x2 = center.x + radius * Math.cos(endAngle);
+        const y2 = center.y + radius * Math.sin(endAngle);
+        
+        const largeArc = angle > 180 ? 1 : 0;
+        
+        // Orientation check for sweep flag
+        const v1 = {x: pStartRef.x - center.x, y: pStartRef.y - center.y};
+        const v2 = {x: pEndRef.x - center.x, y: pEndRef.y - center.y};
+        const cross = v1.x * v2.y - v1.y * v2.x;
+        const sweep = cross > 0 ? 1 : 0;
+
+        const d = `M ${center.x} ${center.y} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} ${sweep} ${x2} ${y2} Z`;
+        
+        const el = document.getElementById(id);
+        el.setAttribute('d', d);
+        
+        // Highlight active angle
+        if (label === this.activeVert) el.classList.add('active-angle');
+        else el.classList.remove('active-angle');
+    }
+
+    drawRightAngleMark(center, p1, p2) {
+        const size = 20;
+        const ang1 = Math.atan2(p1.y - center.y, p1.x - center.x);
+        const ang2 = Math.atan2(p2.y - center.y, p2.x - center.x);
+        
+        const x1 = center.x + size * Math.cos(ang1);
+        const y1 = center.y + size * Math.sin(ang1);
+        const x2 = center.x + size * Math.cos(ang2);
+        const y2 = center.y + size * Math.sin(ang2);
+        const x3 = x1 + (x2 - center.x);
+        const y3 = y1 + (y2 - center.y);
+
+        const d = `M ${x1} ${y1} L ${x3} ${y3} L ${x2} ${y2}`;
+        document.getElementById('right-angle-mark').setAttribute('d', d);
+    }
+
+    snapToRight() {
+        // Force Right Triangle (C = 90)
+        const { A } = this.points;
+        this.points.C = { x: A.x + 300, y: A.y };
+        this.points.B = { x: A.x + 300, y: A.y - 200 };
+        this.setActive('A'); // Default focus
+    }
+
+    reset() {
+        this.points = { A: { x: 100, y: 400 }, B: { x: 400, y: 150 }, C: { x: 400, y: 400 } };
+        this.setActive('A');
+    }
+
+    setAngle(targetDeg) {
+        // Quick preset logic
+        if(this.activeVert === 'A') {
+            const rad = targetDeg * Math.PI / 180;
+            const adj = 300; // Fixed base for presets
+            this.points.C = {x: this.points.A.x + adj, y: this.points.A.y};
+            this.points.B = {x: this.points.C.x, y: this.points.C.y - (adj * Math.tan(rad))};
+        } else {
+            // General fallback
+            this.sliderChange(targetDeg);
+        }
+        this.updateUI();
+    }
+}
+
+const app = new GeometryApp();
+</script>
+
+</body>
+</html>
