@@ -104,6 +104,15 @@
         .measurement-text { font-size: 12px; fill: #cbd5e1; pointer-events: none; }
         .role-text { font-size: 11px; fill: white; font-weight:800; pointer-events: none; text-shadow: 0 1px 3px black; opacity: 0; transition: opacity 0.3s; }
 
+        /* SMOOTH RECENTERING ANIMATION */
+        .smooth-update .point, 
+        .smooth-update .line-segment, 
+        .smooth-update .angle-arc,
+        .smooth-update text,
+        .smooth-update path { 
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); 
+        }
+
         /* --- SIDEBAR --- */
         .sidebar {
             width: 380px;
@@ -486,7 +495,9 @@ class GeometryApp {
         this.challenges = [90, 45, 30, 60, 135];
 
         this.bindEvents();
-        this.updateUI();
+        // Initial recenter and UI update
+        this.recenterTriangle(false);
+        // this.updateUI(); // recenterTriangle calls updateUI
     }
 
     bindEvents() {
@@ -498,6 +509,46 @@ class GeometryApp {
         this.svg.addEventListener('touchstart', (e) => this.startDrag(e), {passive: false});
         this.svg.addEventListener('touchmove', (e) => this.drag(e), {passive: false});
         window.addEventListener('touchend', () => this.endDrag());
+
+        // Resize Listener for Auto-centering
+        window.addEventListener('resize', () => this.recenterTriangle(false));
+    }
+
+    // --- RECENTERING LOGIC ---
+    getCentroid() {
+        const { A, B, C } = this.points;
+        return {
+            x: (A.x + B.x + C.x) / 3,
+            y: (A.y + B.y + C.y) / 3
+        };
+    }
+
+    recenterTriangle(animate = true) {
+        // Toggle smooth transition class
+        if (animate) {
+            this.svg.classList.add('smooth-update');
+            setTimeout(() => this.svg.classList.remove('smooth-update'), 500);
+        } else {
+            this.svg.classList.remove('smooth-update');
+        }
+
+        const rect = this.container.getBoundingClientRect();
+        // SVG center
+        const center = { x: rect.width / 2, y: rect.height / 2 };
+        // Triangle centroid
+        const centroid = this.getCentroid();
+
+        // Calculate offset
+        const dx = center.x - centroid.x;
+        const dy = center.y - centroid.y;
+
+        // Apply translation to all points
+        ['A', 'B', 'C'].forEach(p => {
+            this.points[p].x += dx;
+            this.points[p].y += dy;
+        });
+
+        this.updateUI();
     }
 
     toggleExplainMode() {
@@ -522,6 +573,9 @@ class GeometryApp {
     }
 
     startDrag(e) {
+        // Remove smooth class immediately for responsive dragging
+        this.svg.classList.remove('smooth-update');
+        
         const pos = this.getPointerPos(e);
         ['A', 'B', 'C'].forEach(key => {
             const p = this.points[key];
@@ -540,8 +594,9 @@ class GeometryApp {
         e.preventDefault();
         
         const pos = this.getPointerPos(e);
-        pos.x = Math.max(20, Math.min(this.container.clientWidth - 20, pos.x));
-        pos.y = Math.max(20, Math.min(this.container.clientHeight - 20, pos.y));
+        // Loose constraints (centering will fix later)
+        pos.x = Math.max(-500, Math.min(this.container.clientWidth + 500, pos.x));
+        pos.y = Math.max(-500, Math.min(this.container.clientHeight + 500, pos.y));
 
         this.points[this.dragging] = pos;
         this.updateUI();
@@ -552,6 +607,9 @@ class GeometryApp {
             document.getElementById(`point-${this.dragging}`).classList.remove('active');
             this.dragging = null;
             if(this.challengeMode) this.checkChallenge();
+            
+            // Recenter after drag ends
+            this.recenterTriangle(true);
         }
     }
 
@@ -621,7 +679,8 @@ class GeometryApp {
             y: center.y + len * Math.sin(newAngle)
         };
 
-        this.updateUI();
+        // Recenter and Update
+        this.recenterTriangle(true);
     }
 
     // --- UI RENDER ---
@@ -869,11 +928,13 @@ class GeometryApp {
         this.points.C = { x: A.x + 300, y: A.y };
         this.points.B = { x: A.x + 300, y: A.y - 200 };
         this.setActive('A'); // Default focus
+        this.recenterTriangle(true);
     }
 
     reset() {
         this.points = { A: { x: 100, y: 400 }, B: { x: 400, y: 150 }, C: { x: 400, y: 400 } };
         this.setActive('A');
+        this.recenterTriangle(true);
     }
 
     setAngle(targetDeg) {
@@ -887,7 +948,7 @@ class GeometryApp {
             // General fallback
             this.sliderChange(targetDeg);
         }
-        this.updateUI();
+        this.recenterTriangle(true);
     }
 }
 
